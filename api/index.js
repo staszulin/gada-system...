@@ -1,44 +1,28 @@
-const express = require("express");
-const app = express();
-
-app.use(express.json());
-
 let orders = [];
 
-app.get("/", (req, res) => {
-  res.json({ status: "GADA system running" });
-});
+module.exports = (req, res) => {
 
-app.post("/orders", (req, res) => {
-  const order = {
-    id: Date.now(),
-    chain: req.body.chain,
-    branch: req.body.branch,
-    city: req.body.city,
-    address: req.body.address,
-    notes: req.body.notes,
-    status: "new",
-    pallets: 0,
-    createdAt: new Date()
-  };
+  const { method, url } = req;
 
-  orders.push(order);
-  res.json(order);
-});
+  // בדיקה שהמערכת חיה
+  if (url === "/") {
+    return res.json({ status: "GADA system running" });
+  }
 
-app.get("/orders", (req, res) => {
-  res.json(orders);
-});
+  // יצירת הזמנה
+  if (url === "/orders" && method === "POST") {
+    let body = "";
 
-app.patch("/orders/:id", (req, res) => {
-  const order = orders.find(o => o.id == req.params.id);
+    req.on("data", chunk => {
+      body += chunk.toString();
+    });
 
-  if (!order) return res.status(404).json({ error: "not found" });
+    req.on("end", () => {
+      const data = JSON.parse(body || "{}");
 
-  order.status = req.body.status || order.status;
-  order.pallets = req.body.pallets ?? order.pallets;
-
-  res.json(order);
-});
-
-module.exports = app;
+      const order = {
+        id: Date.now(),
+        chain: data.chain,
+        branch: data.branch,
+        city: data.city,
+        address: data
